@@ -27,11 +27,11 @@ jobs:
           mkdir dist
           # Replace 'calculator' below with the actual name from Cargo.toml
           cp target/release/Clac dist/
-          tar -czf dist/calculator-linux-x86_64.tar.gz -C dist calculator
+          tar -czf dist/Clac-linux-x86_64.tar.gz -C dist Clac
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/calculator-linux-x86_64.tar.gz
+          files: dist/Clac-linux-x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
