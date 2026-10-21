@@ -3,14 +3,21 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Triggers whenever you push a tag starting with 'v', e.g., v0.1.0
+      - 'v*'
 
 permissions:
-  contents: write # Required so the runner can create a release
+  contents: write
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: Clac-linux-x86_64.tar.gz
+          - os: windows-latest
+            asset: Clac-windows-x86_64.zip
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Check out repository
@@ -22,16 +29,39 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
-      - name: Package binary
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
         run: |
           mkdir dist
-          # Replace 'calculator' below with the actual name from Cargo.toml
           cp target/release/Clac dist/
-          tar -czf dist/Clac-linux-x86_64.tar.gz -C dist Clac
+          tar -czf ${{ matrix.asset }} -C dist Clac
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path target\release\Clac.exe -DestinationPath ${{ matrix.asset }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Clac-linux-x86_64.tar.gz
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
