@@ -1,22 +1,37 @@
-name: Rust
+name: Release
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*' # Triggers whenever you push a tag starting with 'v', e.g., v0.1.0
 
-env:
-  CARGO_TERM_COLOR: always
+permissions:
+  contents: write # Required so the runner can create a release
 
 jobs:
-  build:
-
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Package binary
+        run: |
+          mkdir dist
+          # Replace 'calculator' below with the actual name from Cargo.toml
+          cp target/release/calculator dist/
+          tar -czf dist/calculator-linux-x86_64.tar.gz -C dist calculator
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/calculator-linux-x86_64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
