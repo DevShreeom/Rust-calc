@@ -26,7 +26,7 @@ jobs:
         run: |
           mkdir dist
           # Replace 'calculator' below with the actual name from Cargo.toml
-          cp target/release/calculator dist/
+          cp target/release/Clac dist/
           tar -czf dist/calculator-linux-x86_64.tar.gz -C dist calculator
 
       - name: Create GitHub Release
